@@ -2,13 +2,16 @@
 
 (function() {
 
-  firebase.initializeApp({
-    apiKey: 'AIzaSyDdklaao0vq0DcAkCXzYFoZeVJTy9kOoGA',
-    authDomain: 'prjctr-84d57.firebaseapp.com',
-    databaseURL: 'https://prjctr-84d57.firebaseio.com',
-    storageBucket: 'prjctr-84d57.appspot.com',
-    messagingSenderId: '459426391837'
-  });
+  //=require 'firebase.config.js'
+
+  try {
+    firebase.initializeApp(firebaseConfig || {});
+  } catch (err) {
+    alert(
+      `Please, add src/js/firebase.config.js file with the following content:
+      "const firebaseConfig = { ... };"`
+    );
+  }
 
   //=require 'lib/*.js'
   //=require 'middlewares/*.js'
