@@ -14,6 +14,7 @@
   }
 
   //=require 'lib/*.js'
+  //=require 'classes/*.js'
   //=require 'middlewares/*.js'
   //=require 'routes/*.js'
 
