@@ -1,17 +1,50 @@
-function login() {
+function login(ctx) {
+  if (ctx.user) {
+    return page.redirect('/profile');
+  }
+
   render('login');
 
   const loginForm = document.forms['login-form'];
-  const field     = loginForm.elements.email;
+  const {email, password} = loginForm.elements;
 
-  window.field = new FormField(field.parentNode, {
+  const emailFF = new FormField(email.parentNode, {
+    validate: [
+        'required',
+        'email',
+        'minLength[6]',
+        'maxLength[16]'
+    ],
+    resetOnFocus: true,
+    validateOnBlur: true,
+    autoValidate: true
+  });
+  const passwordFF = new FormField(password.parentNode, {
     validate: [
       'required',
-      'email',
-      'minLength[2]',
-      'maxLength[10]',
-      'unknown',
-      'blablah'
-    ]
+      'minLength[6]',
+      'maxLength[20]'
+    ],
+    resetOnFocus: true,
+    validateOnBlur: true,
+    autoValidate: true
   });
+
+  loginForm.addEventListener('submit', submitHandler);
+
+  function submitHandler(e) {
+    const auth = firebase.auth();
+
+    e.preventDefault();
+
+    emailFF.validate();
+    passwordFF.validate();
+
+    if (emailFF.isValid() && passwordFF.isValid()) {
+      auth
+          .signInWithEmailAndPassword(email.value, password.value)
+          .then((success) => page.redirect('/profile'))
+          .catch((error) => console.log(error));
+    }
+  }
 }
