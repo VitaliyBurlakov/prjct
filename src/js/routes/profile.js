@@ -1,3 +1,5 @@
-function profile() {
-  render('profile');
+function profile(ctx) {
+  render('profile-show', {
+    profile: ctx.user
+  });
 }
