@@ -12,7 +12,94 @@ class Editor {
     this.file             = null;
     this.filter           = null;
     this._processing      = false;
+
+    this._onFileChange = this._onFileChange.bind(this);
+
+    this._bindEvents();
     console.log(this);
+  }
+
+  applyFilter(filter) {
+    if (!(filter in this.caman)) {
+      console.log(`There is no filter with name "${filter}"`);
+      return;
+    }
+
+    if (this.filter === filter || this._processing) {
+      return;
+    }
+
+    this._processing = true;
+    this._toggleBusyState();
+    this.caman.revert();
+    this.caman[filter]();
+    this.caman.render(() => {
+      this._processing = false;
+      this._toggleBusyState();
+      this.filter = filter;
+      this._highlightActiveFilter();
+    });
+  }
+
+  resetFilter() {}
+
+  save() {}
+
+  _bindEvents() {
+    this.fileInput.addEventListener('change', this._onFileChange);
+  }
+
+  _onFileChange(e) {
+    this.file = this.fileInput.files[0];
+    this._initEditor();
+  }
+
+  _onFilterChange() {}
+
+  _onUploadProgress() {}
+
+  _highlightActiveFilter() {}
+
+  _toggleBusyState() {
+    const { busyClass } = this.props;
+    const isBusy   = this.root.classList.contains(busyClass);
+    const triggers = [this.triggerReset, this.triggerUpload];
+    const method   = isBusy ? 'removeAttribute' : 'setAttribute';
+
+    this.root.classList.toggle(busyClass);
+    triggers.forEach(el => el[method]('disabled', true));
+  }
+
+  _toggleUploadingState() {
+    this.root.classList.toggle(this.props.uploadingClass);
+  }
+
+  _initEditor() {
+    const { hasImageClass, imageMaxSize } = this.props;
+    const canvas = document.createElement('canvas');
+    const url = URL.createObjectURL(this.file);
+
+    if (this.canvas) {
+      this.canvas.parentNode.replaceChild(canvas, this.canvas);
+    } else {
+      this.canvasContainer.appendChild(canvas);
+    }
+
+    this.canvas = canvas;
+    this._toggleBusyState();
+    this.caman = Caman(this.canvas, url, (caman) => {
+      const { originalWidth, originalHeight } = caman;
+      const ratio = originalWidth / originalHeight;
+      const width = originalWidth > imageMaxSize
+        ? imageMaxSize
+        : originalWidth;
+      const height = Math.round(width / ratio);
+
+      caman.resize({ width, height }).render();
+
+      this._toggleBusyState();
+      this.root.classList.add(hasImageClass);
+    });
   }
 }
 
