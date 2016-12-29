@@ -13,7 +13,13 @@ class Editor {
     this.filter           = null;
     this._processing      = false;
 
-    this._onFileChange = this._onFileChange.bind(this);
+    this.resetFilter       = this.resetFilter.bind(this);
+    this.save              = this.save.bind(this);
+    this._onFileChange     = this._onFileChange.bind(this);
+    this._onFilterClick    = this._onFilterClick.bind(this);
+    this._onUploadProgress = this._onUploadProgress.bind(this);
+
+    this.triggerReset.style.display = 'none';
 
     this._bindEvents();
     console.log(this);
@@ -41,9 +47,61 @@ class Editor {
     });
   }
 
-  resetFilter() {}
+  resetFilter() {
+    if (!this.filter) return;
+    this.filter = null;
+    this.caman && this.caman.revert();
+    this._highlightActiveFilter();
+    this.triggerReset.style.display = 'none';
+  }
 
-  save() {}
+  save() {
+    const id          = generateID('', 12);
+    const user        = firebase.auth().currentUser;
+    const dbPath      = `/posts/${id}`;
+    const storagePath = `/pictures/${user.uid}/${id}.jpg`;
+    const storageRef  = firebase.storage().ref(storagePath);
+    const dbRef       = firebase.database().ref(dbPath);
+
+    // show spinner and progress bar
+    this._toggleBusyState();
+    this._toggleUploadingState();
+
+    // upload image to firebase as base64 encoded string
+    const uploadTask = storageRef.putString(
+      this.caman.toBase64('.jpg'),
+      'data_url'
+    );
+
+    // show progress while uploading
+    uploadTask.on('state_changed', this._onUploadProgress);
+
+    uploadTask
+      // create entry in firebase database after successfull upload
+      .then(snapshot => {
+        const { timeCreated, downloadURLs, fullPath } = snapshot.metadata;
+        return dbRef.set({
+          id,
+          author: user.uid,
+          created: timeCreated,
+          url: downloadURLs[0],
+          caption: this.caption.value.trim(),
+          filterName: this.filter,
+          storagePath: fullPath
+        });
+      })
+      // hide spinner and progress bar
+      .then(() => {
+        this._toggleBusyState();
+        this._toggleUploadingState();
+        this.props.onSave();
+      })
+      // handle error while uploading or entry creation
+      .catch(error => {
+        console.log(error);
+        this.props.onError(error);
+      });
+  }
 
   _bindEvents() {
     this.fileInput.addEventListener('change', this._onFileChange);
@@ -54,11 +112,18 @@ class Editor {
     this._initEditor();
   }
 
-  _onFilterChange() {}
+  _onFilterChange() {
+    // TODO
+  }
 
-  _onUploadProgress() {}
+  _onUploadProgress(snapshot) {
+    const progress = snapshot.bytesTransferred / snapshot.totalBytes * 100;
+    this.progressBar.style.width = progress + '%';
+  }
 
-  _highlightActiveFilter() {}
+  _highlightActiveFilter() {
+    // TODO
+  }
 
   _toggleBusyState() {
     const { busyClass } = this.props;
