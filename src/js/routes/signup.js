@@ -60,6 +60,7 @@ function signup(ctx, next) {
   function handler(e) {
     const errors = [];
     const form   = e.target;
+    // eslint-disable-next-line camelcase
     const { email, password, password_confirm } = form.elements;
 
     e.preventDefault();
@@ -72,6 +73,7 @@ function signup(ctx, next) {
       errors.push('Password must be at least 6 characters');
     }
 
+    // eslint-disable-next-line camelcase
     if (password.value !== password_confirm.value) {
       errors.push('Wrong password');
     }
