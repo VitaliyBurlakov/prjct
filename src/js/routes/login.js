@@ -11,9 +11,7 @@ function login(ctx) {
   const emailFF = new FormField(email.parentNode, {
     validate: [
       'required',
-      'email',
-      'minLength[6]',
-      'maxLength[16]'
+      'email'
     ],
     resetOnFocus: true,
     validateOnBlur: true,
@@ -21,9 +19,7 @@ function login(ctx) {
   });
   const passwordFF = new FormField(password.parentNode, {
     validate: [
-      'required',
-      'minLength[6]',
-      'maxLength[20]'
+      'required'
     ],
     resetOnFocus: true,
     validateOnBlur: true,
