@@ -55,8 +55,28 @@ class Editor {
     this.triggerReset.style.display = 'none';
   }
 
+  // get caption and add it to the post as first comment
+  _getComments() {
+    const caption = this.caption.value.trim();
+
+    if (!caption) return {};
+
+    const { uid, username } = this.props.currentUser;
+    const commentId = generateID('comment-');
+
+    return {
+      [commentId]: {
+        id: commentId,
+        value: caption,
+        author: username,
+        authorId: uid,
+        created: moment().toJSON()
+      }
+    };
+  }
+
   save() {
-    const id          = generateID('', 12);
+    const id          = generateID('post-');
     const user        = firebase.auth().currentUser;
     const dbPath      = `/posts/${id}`;
     const storagePath = `/pictures/${user.uid}/${id}.jpg`;
@@ -85,9 +105,13 @@ class Editor {
           author: user.uid,
           created: timeCreated,
           url: downloadURLs[0],
-          caption: this.caption.value.trim(),
           filterName: this.filter,
-          storagePath: fullPath
+          storagePath: fullPath,
+          dimensions: {
+            width: this.caman.width,
+            height: this.caman.height
+          },
+          comments: this._getComments()
         });
       })
       // hide spinner and progress bar
@@ -104,7 +128,15 @@ class Editor {
   }
 
   _bindEvents() {
+    this.triggerReset.addEventListener('click', this.resetFilter);
+    this.triggerUpload.addEventListener('click', this.save);
     this.fileInput.addEventListener('change', this._onFileChange);
+    delegate(
+      this.filtersContainer,
+      'click',
+      '[data-filter]',
+      this._onFilterClick
+    );
   }
 
   _onFileChange(e) {
@@ -112,7 +144,7 @@ class Editor {
     this._initEditor();
   }
 
-  _onFilterChange() {
+  _onFilterClick(e) {
     // TODO
   }
 
@@ -142,7 +174,7 @@ class Editor {
   _initEditor() {
     const { hasImageClass, imageMaxSize } = this.props;
     const canvas = document.createElement('canvas');
-    const url = URL.createObjectURL(this.file);
+    const url    = URL.createObjectURL(this.file);
 
     if (this.canvas) {
       this.canvas.parentNode.replaceChild(canvas, this.canvas);
@@ -154,10 +186,8 @@ class Editor {
     this._toggleBusyState();
     this.caman = Caman(this.canvas, url, (caman) => {
       const { originalWidth, originalHeight } = caman;
-      const ratio = originalWidth / originalHeight;
-      const width = originalWidth > imageMaxSize
-        ? imageMaxSize
-        : originalWidth;
+      const ratio  = originalWidth / originalHeight;
+      const width  = originalWidth > imageMaxSize ? imageMaxSize : originalWidth;
       const height = Math.round(width / ratio);
 
       caman.resize({ width, height }).render();
@@ -169,6 +199,7 @@ class Editor {
 }
 
 Editor.defaults = {
+  currentUser: {},
   activeClass: 'is-active',
   busyClass: 'is-busy',
   hasImageClass: 'has-image',
