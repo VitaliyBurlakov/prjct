@@ -27,6 +27,7 @@ const errorHandler = (title = 'Error') => plumber({
   })
 });
 
+const isProd = gutil.env.prod;
 
 gulp.task('server', () => {
   server.init({
@@ -57,7 +58,8 @@ gulp.task('styles', () => {
     .pipe(sourcemaps.init())
     .pipe(stylus({
       paths: ['src/css', 'node_modules'],
-      'include css': true
+      'include css': true,
+      compress: isProd
     }))
     .pipe(postcss([autoprefixer()]))
     .pipe(sourcemaps.write('./'))
@@ -160,7 +162,14 @@ gulp.task('static:fonts', () => {
     .pipe(gulp.dest('public/fonts'));
 });
 
-gulp.task('static', ['static:html', 'static:fonts'], () => {
+gulp.task('static:images', () => {
+  return gulp
+    .src('src/img/**/*.*')
+    .pipe(errorHandler())
+    .pipe(gulp.dest('public/img'));
+});
+
+gulp.task('static', ['static:html', 'static:images', 'static:fonts'], () => {
   return gulp
     .src([
       'src/favicon.ico'
