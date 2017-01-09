@@ -7,7 +7,6 @@ const VForm = (function() {
   };
 
   class VForm {
-
     constructor(form, props) {
       this.element = isDomElement(form) ? form : qs(form);
 
@@ -21,7 +20,7 @@ const VForm = (function() {
       )[0];
       this._setupFields();
       this._bindEvents();
-      // console.log(this);
+      console.log(this);
     }
 
     validate() {
@@ -29,8 +28,7 @@ const VForm = (function() {
       const result = this.fields.map(f => f.validate());
 
       if (result.every(res => res === true)) {
-        // call(onValid, this);
-        onValid();
+        call(onValid, this);
         return true;
       }
 
@@ -38,15 +36,24 @@ const VForm = (function() {
         .reduce((acc, next) => acc.concat(next), [])
         .filter(val => val !== true);
 
-      onError();
-
-      // call(onError, this, errors);
+      call(
+        onError,
+        this,
+        this.fields.map(f => ({
+          el: f.control,
+          errors: f.errors
+        }))
+      );
       if (autoValidate) this.setInvalidState();
       return errors;
     }
 
     isValid() {
       return this.fields.map(f => f.isValid()).every(res => res === true);
+    }
+
+    serialize() {
+      return formSerialize(this.element, { hash: true, empty: true });
     }
 
     setInvalidState() {
@@ -77,6 +84,15 @@ const VForm = (function() {
       return this;
     }
 
+    _updateState(e) {
+      if (e.target === this.submit) return;
+      if (this.isValid()) {
+        this.resetState();
+      } else {
+        this.setInvalidState();
+      }
+    }
+
     _setupFields() {
       const { fields, autoValidate } = this.props;
       // create FormField instances for those fields that need to be validated
@@ -86,16 +102,6 @@ const VForm = (function() {
         const formField = input && new FormField(input.parentNode, props);
         return formField ? acc.concat(formField) : acc;
       }, []);
-    }
-
-    _updateState(e) {
-      this.validate();
-      if (e.target === this.submit) return;
-      if (this.isValid()) {
-        this.resetState();
-      } else {
-        this.setInvalidState();
-      }
     }
 
     _submitHandler(e) {
@@ -127,4 +133,5 @@ const VForm = (function() {
   };
 
   return VForm;
+
 } ());
