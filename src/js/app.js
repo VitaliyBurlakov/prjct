@@ -21,11 +21,15 @@
   const { location, history, templates } = window;
   const rootElement = qs('#root');
 
-  function render(tplName, data = {}) {
-    const user = firebase.auth().currentUser;
-    const userData = user ? user.toJSON() : null;
-    data = Object.assign(data, { user: userData });
-    rootElement.innerHTML = templates[tplName](data);
+  /**
+   * Render template with given name
+   *
+   * @param  {string}      - Template name.
+   * @param  {...[Object]} - One or more contexts.
+   * @return {Void}
+   */
+  function render(tplName, ...data) {
+    rootElement.innerHTML = templates[tplName](Object.assign({}, ...data));
   }
 
   function render404() {
