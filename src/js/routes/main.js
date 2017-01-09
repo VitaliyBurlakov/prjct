@@ -1,3 +1,3 @@
-function main() {
-  render('main');
+function main(ctx) {
+  render('main', ctx);
 }
